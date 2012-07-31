@@ -15,7 +15,7 @@ use TYPO3\FLOW3\Package\PackageInterface;
 
 /**
  * Testcase for the default package manager
- *
+
  */
 class PackageManagerTest extends \TYPO3\FLOW3\Tests\UnitTestCase {
 
@@ -26,7 +26,7 @@ class PackageManagerTest extends \TYPO3\FLOW3\Tests\UnitTestCase {
 
 	/**
 	 * Sets up this test case
-	 *
+
 	 */
 	protected function setUp() {
 		\vfsStreamWrapper::register();
@@ -168,7 +168,9 @@ class PackageManagerTest extends \TYPO3\FLOW3\Tests\UnitTestCase {
 	}
 
 	/**
-	 * @test
+	 * Not marked as test since Package.php is no longer required
+	 *
+	 * @deprecated
 	 * @expectedException TYPO3\FLOW3\Package\Exception\CorruptPackageException
 	 */
 	public function registerPackagesThrowsAnExceptionWhenItFindsACorruptPackage() {
@@ -187,7 +189,7 @@ class PackageManagerTest extends \TYPO3\FLOW3\Tests\UnitTestCase {
 		$packageManager->_set('packageStatesPathAndFilename', 'vfs://Test/Configuration/PackageStates.php');
 		$packageManager->_set('packageStatesConfiguration', $packageStatesConfiguration);
 
-		$packageManager->_call('registerPackages');
+		$packageManager->_call('registerPackagesFromConfiguration');
 	}
 
 	/**
@@ -464,23 +466,23 @@ class Package extends \TYPO3\FLOW3\Package\Package {}
 		$symfonyComponentYaml->expects($this->any())->method('getPackageKey')->will($this->returnValue('Symfony.Component.Yaml'));
 
 		$unsortedPackageStatesConfiguration = array('packages' =>
-			array(
-				'Doctrine.ORM' => array(
-					'dependencies' => array('Doctrine.Common', 'Doctrine.DBAL')
-				),
-				'Symfony.Component.Yaml' => array(
-					'dependencies' => array()
-				),
-				'TYPO3.FLOW3' => array(
-					'dependencies' => array('Symfony.Component.Yaml', 'Doctrine.Common', 'Doctrine.DBAL', 'Doctrine.ORM')
-				),
-				'Doctrine.Common' => array(
-					'dependencies' => array()
-				),
-				'Doctrine.DBAL' => array(
-					'dependencies' => array('Doctrine.Common')
-				)
+		array(
+			'Doctrine.ORM' => array(
+				'dependencies' => array('Doctrine.Common', 'Doctrine.DBAL')
+			),
+			'Symfony.Component.Yaml' => array(
+				'dependencies' => array()
+			),
+			'TYPO3.FLOW3' => array(
+				'dependencies' => array('Symfony.Component.Yaml', 'Doctrine.Common', 'Doctrine.DBAL', 'Doctrine.ORM')
+			),
+			'Doctrine.Common' => array(
+				'dependencies' => array()
+			),
+			'Doctrine.DBAL' => array(
+				'dependencies' => array('Doctrine.Common')
 			)
+		)
 		);
 
 		$unsortedPackages = array(
@@ -505,27 +507,161 @@ class Package extends \TYPO3\FLOW3\Package\Package {}
 		);
 
 		$expectedSortedPackageStatesConfiguration = array('packages' =>
-			array(
-				'Doctrine.Common' => array(
-					'dependencies' => array()
-				),
-				'Doctrine.DBAL' => array(
-					'dependencies' => array('Doctrine.Common')
-				),
-				'Doctrine.ORM' => array(
-					'dependencies' => array('Doctrine.Common', 'Doctrine.DBAL')
-				),
-				'Symfony.Component.Yaml' => array(
-					'dependencies' => array()
-				),
-				'TYPO3.FLOW3' => array(
-					'dependencies' => array('Symfony.Component.Yaml', 'Doctrine.Common', 'Doctrine.DBAL', 'Doctrine.ORM')
-				)
+		array(
+			'Doctrine.Common' => array(
+				'dependencies' => array()
+			),
+			'Doctrine.DBAL' => array(
+				'dependencies' => array('Doctrine.Common')
+			),
+			'Doctrine.ORM' => array(
+				'dependencies' => array('Doctrine.Common', 'Doctrine.DBAL')
+			),
+			'Symfony.Component.Yaml' => array(
+				'dependencies' => array()
+			),
+			'TYPO3.FLOW3' => array(
+				'dependencies' => array('Symfony.Component.Yaml', 'Doctrine.Common', 'Doctrine.DBAL', 'Doctrine.ORM')
 			)
+		)
 		);
 
 		$this->assertEquals($expectedSortedPackageKeys, array_keys($packageManager->_get('packages')), 'The packages have not been ordered according to their dependencies!');
 		$this->assertEquals($expectedSortedPackageStatesConfiguration, $packageManager->_get('packageStatesConfiguration'), 'The package states configurations have not been ordered according to their dependencies!');
 	}
+
+	/**
+	 * This is a basic fixture for all PSR-0 tests
+	 *
+	 * @todo all PSR-0 tests should probably be moved to seperate test
+	 */
+	protected function createBasicPsr0Package($packageKey) {
+		$packagePath = 'vendor/' . $packageKey . '/';
+		$classesPath = 'src/';
+		$excludeDirectories = 'Tests, Legacy';
+		if (!is_dir('vfs://Test/Packages/' . $packagePath)) {
+			mkdir('vfs://Test/Packages/' . $packagePath, 0770, TRUE);
+		}
+
+		return $this->packageManager->registerPackage($packageKey, $packagePath, $classesPath, $excludeDirectories);
+	}
+
+	/**
+	 * Tests if PSR-0 Package is added correctly
+	 *
+	 * @test
+	 */
+	public function registerPackageAddsPackage() {
+		$packageKey = 'PSR.Zero';
+		$package = $this->createBasicPsr0Package($packageKey);
+
+		$this->assertInstanceOf('\TYPO3\FLOW3\Package\Package',$package,'Added package is not an instance of Package');
+		$this->assertTrue($this->packageManager->isPackageAvailable($packageKey),'Added package is not available');
+		$this->assertInstanceOf('\TYPO3\FLOW3\Package\Package',$this->packageManager->getPackage($packageKey),'Getting package by key from PackageManager is not an instance of Package');
+
+
+		$this->assertAttributeEquals('vfs://Test/Packages/vendor/PSR.Zero/','packagePath',$package);
+		$this->assertAttributeEquals('src/','classesPath',$package);
+		$this->assertAttributeEquals(array('Tests', 'Legacy'),'excludeDirectoriesFromClassFiles',$package);
+
+	}
+
+
+	/**
+	 * @test
+	 */
+	public function registerPackagesFromConfigurationLoadsPsr0Packages() {
+
+		$packageManager = $this->getAccessibleMock('TYPO3\FLOW3\Package\PackageManager', array('dummy'));
+		$packageManager->_set('packagesBasePath', 'vfs://Test/Packages/');
+		$packageManager->_set('packageStatesPathAndFilename', 'vfs://Test/Configuration/PackageStates.php');
+
+		$packageKey = 'PSR.Zero';
+		$packagePath = 'vendor/' . $packageKey . '/';
+		$classesPath = 'src/';
+		$excludeDirectories = 'Tests, Legacy';
+		mkdir('vfs://Test/Packages/vendor/' . $packageKey . '/', 0770, TRUE);
+
+		$packageStatesConfiguration['packages'][$packageKey] = array(
+			'state' => 'inactive',
+			'packagePath' => $packagePath,
+			'packageType' => 'PSR-0',
+			'classesPath' => $classesPath,
+			'excludeDirectories' => $excludeDirectories
+		);
+
+		$packageManager->_set('packageStatesConfiguration', $packageStatesConfiguration);
+		$packageManager->_call('sortAndSavePackageStates');
+
+		$packageManager->_call('registerPackagesFromConfiguration');
+		$this->assertInstanceOf('\TYPO3\FLOW3\Package\Package', $packageManager->getPackage($packageKey));
+	}
+
+	/**
+	 * @test
+	 */
+	public function registerPackagesSetsFromConfigurationExcludeDirectories() {
+		$packageManager = $this->getAccessibleMock('TYPO3\FLOW3\Package\PackageManager', array('dummy'));
+		$packageManager->_set('packagesBasePath', 'vfs://Test/Packages/');
+		$packageManager->_set('packageStatesPathAndFilename', 'vfs://Test/Configuration/PackageStates.php');
+
+		$packageKey = 'PSR.Zero';
+		$packagePath = 'vendor/' . $packageKey . '/';
+		$classesPath = 'src/';
+		$excludeDirectories = 'Tests, Legacy';
+		mkdir('vfs://Test/Packages/vendor/' . $packageKey . '/', 0770, TRUE);
+
+		$packageStatesConfiguration['packages'][$packageKey] = array(
+			'state' => 'inactive',
+			'packagePath' => $packagePath,
+			'packageType' => 'PSR-0',
+			'classesPath' => $classesPath,
+			'excludeDirectories' => $excludeDirectories
+		);
+
+		$packageManager->_set('packageStatesConfiguration', $packageStatesConfiguration);
+		$packageManager->_call('sortAndSavePackageStates');
+
+		$packageManager->_call('registerPackagesFromConfiguration');
+		$package = $packageManager->getPackage($packageKey);
+		$this->assertAttributeEquals(array('Tests', 'Legacy'),'excludeDirectoriesFromClassFiles',$package);
+	}
+
+	/**
+	 * Tests if exception is thrown if Package already exists
+	 *
+	 * @test
+	 * @expectedException \TYPO3\FLOW3\Package\Exception\InvalidPackageStateException
+	 */
+	public function registerPackageThrowsExceptionIfPackageExists() {
+		$packageKey = 'PSR.Zero';
+		$this->createBasicPsr0Package($packageKey);
+		$this->createBasicPsr0Package($packageKey);
+	}
+
+	/**
+	 * Tests if PSR-0 package is removed
+	 *
+	 * @test
+	 */
+	public function removePsr0PackageRemovesPackage() {
+		$packageKey = 'PSR.Zero';
+		$this->createBasicPsr0Package($packageKey);
+		$this->packageManager->unregisterPackage($packageKey);
+
+		$this->assertFalse($this->packageManager->isPackageAvailable($packageKey));
+	}
+
+	/**
+	 * Tests if exception is thrown if Package already exists
+	 *
+	 * @test
+	 * @expectedException \TYPO3\FLOW3\Package\Exception\InvalidPackageStateException
+	 */
+	public function removePsr0ThrowsExceptionIfPackageDoesNotExist() {
+		$packageKey = 'PSR.Zero';
+		$this->packageManager->unregisterPackage($packageKey);
+	}
 }
+
 ?>

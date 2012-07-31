@@ -191,6 +191,9 @@ class CompileTimeObjectManager extends ObjectManager {
 		foreach ($packages as $packageKey => $package) {
 			if ($package->isObjectManagementEnabled()) {
 				$classFiles = $package->getClassFiles();
+				if (sizeof($classFiles) === 0) {
+					throw new \TYPO3\FLOW3\Package\Exception\CorruptPackageException('Package "' . $packageKey . '" did not contain any files', 1338987564);
+				}
 				if ($this->allSettings['TYPO3']['FLOW3']['object']['registerFunctionalTestClasses'] === TRUE) {
 					$classFiles = array_merge($classFiles, $package->getFunctionalTestsClassFiles());
 				}
@@ -299,7 +302,7 @@ class CompileTimeObjectManager extends ObjectManager {
 				case Property::PROPERTY_TYPES_OBJECT:
 					$propertyObjectName = $property->getValue();
 					if (!is_string($propertyObjectName)) {
-						throw new Exception\CannotBuildObjectException('The object definition of "' . $objectName . '::' . $propertyName . '" is too complex for the compile time Object Manager. You can only use plain object names, not factories and the like. Check configuration in ' . $this->objectConfigurations[$objectName]->getConfigurationSourceHint() . ' and objects which depend on ' . $objectName. '.', 1297099659);
+						throw new Exception\CannotBuildObjectException('The object definition of "' . $objectName . '::' . $propertyName . '" is too complex for the compile time Object Manager. You can only use plain object names, not factories and the like. Check configuration in ' . $this->objectConfigurations[$objectName]->getConfigurationSourceHint() . ' and objects which depend on ' . $objectName . '.', 1297099659);
 					}
 					$value = $this->get($propertyObjectName);
 				break;
