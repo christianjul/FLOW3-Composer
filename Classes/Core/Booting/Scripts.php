@@ -501,7 +501,10 @@ class Scripts {
 		}
 		$output = array();
 		exec($command, $output, $result);
-		if ($outputResults || $result !== 0) {
+		if ($result !== 0) {
+			throw new Exception\SubProcessException('Execution of subprocess failed with exitcode "' . $result .'" and output:' . PHP_EOL . PHP_EOL . implode(PHP_EOL, $output) );
+		}
+		if ($outputResults) {
 			echo implode(PHP_EOL, $output);
 		}
 		return $result === 0;
