@@ -1,0 +1,24 @@
+{
+	"name": "TYPO3.FLOW3",
+	"description": "FLOW3 - TYPO3's Application Framework",
+	"homepage": "http://flow3.typo3.org",
+	"keywords": ["framework"],
+	"license": ["GPL-3.0+"],
+	"authors": [
+		{
+			"name": "FLOW3 Development Team",
+			"homepage": "http://typo3.org/teams/core-development-team/"
+		}
+	],
+
+	"version": "dev-master",
+	"version_normalized": "9999999-dev",
+
+	"type": "composer-installer",
+	"extra": {
+		"class": "TYPO3\\FLOW3\\ComposerInstaller\\Flow3PackageInstaller"
+	},
+	"autoload": {
+		"psr-0": {"TYPO3\\FLOW3\\ComposerInstaller" : "Scripts/ComposerInstaller/PSR-0"}
+	}
+}

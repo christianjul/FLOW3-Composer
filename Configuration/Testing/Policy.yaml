@@ -1,0 +1,41 @@
+#                                                                        #
+# Security policy for the FLOW3 Framework                                #
+#                                                                        #
+# This file contains the default security policy configuration for the   #
+# FLOW3 Framework. Don't modify this file but add configuration options  #
+# to the Policy.yaml file in the in global Configuration/ directory      #
+# instead.                                                               #
+
+resources:
+  methods:
+    TYPO3_FLOW3_Tests_Functional_Security_Fixtures_RestrictedController_customerAction: 'method(TYPO3\FLOW3\Tests\Functional\Security\Fixtures\Controller\RestrictedController->customerAction())'
+    TYPO3_FLOW3_Tests_Functional_Security_Fixtures_RestrictedController_adminAction: 'method(TYPO3\FLOW3\Tests\Functional\Security\Fixtures\Controller\RestrictedController->adminAction())'
+  entities:
+    TYPO3_FLOW3_Tests_Functional_Security_Fixtures_RestrictableEntity:
+      TYPO3_FLOW3_allEntities: 'ANY'
+      TYPO3_FLOW3_hiddenEntities: 'this.hidden == TRUE'
+      TYPO3_FLOW3_othersEntities: 'current.securityContext.account != this.ownerAccount && this.ownerAccount != NULL'
+
+
+roles:
+  Customer: []
+  Administrator: []
+
+
+acls:
+
+  Customer:
+    methods:
+      TYPO3_FLOW3_Tests_Functional_Security_Fixtures_RestrictedController_customerAction: GRANT
+      TYPO3_FLOW3_Tests_Functional_Security_Fixtures_RestrictedController_adminAction:    DENY
+    entities:
+      TYPO3_FLOW3_allEntities: GRANT
+
+  Administrator:
+    methods:
+      TYPO3_FLOW3_Tests_Functional_Security_Fixtures_RestrictedController_customerAction: GRANT
+      TYPO3_FLOW3_Tests_Functional_Security_Fixtures_RestrictedController_adminAction:    GRANT
+    entities:
+      TYPO3_FLOW3_allEntities: GRANT
+      TYPO3_FLOW3_hiddenEntities: GRANT
+      TYPO3_FLOW3_othersEntities: GRANT
