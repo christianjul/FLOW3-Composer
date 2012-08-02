@@ -37,6 +37,11 @@ class PackageCommandController extends \TYPO3\FLOW3\Cli\CommandController {
 	protected $bootstrap;
 
 	/**
+	 * @var \TYPO3\FLOW3\Log\SystemLoggerInterface
+	 */
+	protected $systemLogger;
+
+	/**
 	 * @param array $settings The FLOW3 settings
 	 * @return void
 	 */
@@ -60,6 +65,15 @@ class PackageCommandController extends \TYPO3\FLOW3\Cli\CommandController {
 	}
 
 	/**
+	 * @param \TYPO3\FLOW3\Log\SystemLoggerInterface $systemLogger
+	 * @return void
+	 */
+	public function injectSystemLogger(\TYPO3\FLOW3\Log\SystemLoggerInterface $systemLogger) {
+		$this->systemLogger = $systemLogger;
+	}
+
+
+	/**
 	 * Create a new package
 	 *
 	 * This command creates a new package which contains only the mandatory
@@ -81,6 +95,71 @@ class PackageCommandController extends \TYPO3\FLOW3\Cli\CommandController {
 		}
 		$package = $this->packageManager->createPackage($packageKey);
 		$this->outputLine('Created new package "' . $packageKey . '" at "' . $package->getPackagePath() . '".');
+	}
+
+	/**
+	 * Register a package
+	 *
+	 * This command registers any PSR-0 compatible package for use in FLOW3. It does not activate it.
+	 *
+	 * Note: FLOW3 does a reflection of all classes in the package, if any code is dependent on non-available libraries,
+	 * ie. testing-frameworks these must be marked as excluded.
+	 *
+	 * @FLOW3\FlushesCaches
+	 * @param string $packageKey The package key of the package to register - must match the PSR-0 namespace but with dots instead of slashes.
+	 * @param string $packagePath The path to the package, relative to the Packages repository
+	 * @param string $classesPath Path to the component-files relative to package-path.
+	 * @param string $excludeDirectories Comma-seperated list of directories to ignore when building list of files in class. Can be used for Tests etc. that depends on external libraries not installed.
+	 * @return string
+	 * @see typo3.flow3:Package:unregister
+	 */
+	public function registerCommand($packageKey, $packagePath = 'Application', $classesPath = '/', $excludeDirectories = '') {
+		$fullPackagePath =  $packagePath . '/' . $packageKey . '/';
+
+		try {
+			$this->packageManager->registerPackage($packageKey, $fullPackagePath, $classesPath, $excludeDirectories);
+			$this->packageManager->activatePackage($packageKey);
+			Scripts::executeCommand('typo3.flow3:cache:flush', $this->settings, FALSE);
+		} catch (\TYPO3\FLOW3\Package\Exception $exception) {
+			$this->outputLine($exception->getMessage());
+			$this->quit(1);
+		} catch (\TYPO3\FLOW3\Core\Booting\Exception\SubProcessException $exception) {
+			$this->packageManager->unRegisterPackage($packageKey);
+			$this->systemLogger->logException($exception);
+			$this->outputLine(
+				'Package "%s" could not be registered and activated properly.' . PHP_EOL . PHP_EOL .
+				'This is most likely due to errors in the reflection of the Package files.' .PHP_EOL .
+				'Use the "--exclude-directories" option to ignore tests etc.'
+				, array($packageKey));
+			$this->quit(1);
+		}
+
+		$this->outputLine('Registered and activated package "%s".', array($packageKey));
+		$this->sendAndExit(0);
+	}
+
+	/**
+	 * Unregister a package
+	 *
+	 * This command deactivates a currently active package.
+	 *
+	 * @FLOW3\FlushesCaches
+	 * @param string $packageKey The package key of the package to create
+	 * @return string
+	 * @see typo3.flow3:Package:unregister
+	 */
+	public function unregisterCommand($packageKey) {
+		try {
+			$this->packageManager->unregisterPackage($packageKey);
+		} catch (\Exception $e) {
+			$this->outputLine($e->getMessage());
+			$this->quit(1);
+		}
+
+
+		$this->outputLine('Deactivated and unregistered package "%s".', array($packageKey));
+		Scripts::executeCommand('typo3.flow3:cache:flush', $this->settings, FALSE);
+		$this->sendAndExit(0);
 	}
 
 	/**

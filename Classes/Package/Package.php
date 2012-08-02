@@ -22,24 +22,28 @@ class Package implements PackageInterface {
 
 	/**
 	 * Unique key of this package. Example for the FLOW3 package: "TYPO3.FLOW3"
+	 *
 	 * @var string
 	 */
 	protected $packageKey;
 
 	/**
 	 * Full path to this package's main directory
+	 *
 	 * @var string
 	 */
 	protected $packagePath;
 
 	/**
 	 * Full path to this package's PSR-0 class loader entry point
+	 *
 	 * @var string
 	 */
 	protected $classesPath;
 
 	/**
 	 * If this package is protected and therefore cannot be deactivated or deleted
+	 *
 	 * @var boolean
 	 * @api
 	 */
@@ -47,19 +51,29 @@ class Package implements PackageInterface {
 
 	/**
 	 * Meta information about this package
+	 *
 	 * @var \TYPO3\FLOW3\Package\MetaData
 	 */
 	protected $packageMetaData;
 
 	/**
 	 * Names and relative paths (to this package directory) of files containing classes
+	 *
 	 * @var array
 	 */
 	protected $classFiles;
 
 	/**
+	 * Array of directories in class to exclude from reflected classes
+	 *
+	 * @var array
+	 */
+	protected $excludeDirectoriesFromClassFiles = array();
+
+	/**
 	 * If enabled, the files in the Classes directory are registered and Reflection, Dependency Injection, AOP etc. are supported.
 	 * Disable this flag if you don't need object management for your package and want to save some memory.
+	 *
 	 * @var boolean
 	 * @api
 	 */
@@ -75,10 +89,18 @@ class Package implements PackageInterface {
 	 * @throws \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException if an invalid package path was passed
 	 */
 	public function __construct($packageKey, $packagePath, $classesPath = self::DIRECTORY_CLASSES) {
-		if (preg_match(self::PATTERN_MATCH_PACKAGEKEY, $packageKey) !== 1) throw new \TYPO3\FLOW3\Package\Exception\InvalidPackageKeyException('"' . $packageKey . '" is not a valid package key.', 1217959510);
-		if (!(is_dir($packagePath) || (\TYPO3\FLOW3\Utility\Files::is_link($packagePath) && is_dir(realpath(rtrim($packagePath, '/')))))) throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path does not exist or is no directory.', 1166631889);
-		if (substr($packagePath, -1, 1) !== '/') throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path has no trailing forward slash.', 1166633720);
-		if (substr($classesPath, 1, 1) === '/') throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package classes path has a leading forward slash.', 1334841320);
+		if (preg_match(self::PATTERN_MATCH_PACKAGEKEY, $packageKey) !== 1) {
+			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackageKeyException('"' . $packageKey . '" is not a valid package key.', 1217959510);
+		}
+		if (!(is_dir($packagePath) || (\TYPO3\FLOW3\Utility\Files::is_link($packagePath) && is_dir(realpath(rtrim($packagePath, '/')))))) {
+			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path does not exist or is no directory.', 1166631889);
+		}
+		if (substr($packagePath, -1, 1) !== '/') {
+			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path has no trailing forward slash.', 1166633720);
+		}
+		if (substr($classesPath, 1, 1) === '/') {
+			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package classes path has a leading forward slash.', 1334841320);
+		}
 
 		$this->packageKey = $packageKey;
 		$this->packagePath = $packagePath;
@@ -101,7 +123,11 @@ class Package implements PackageInterface {
 	 */
 	public function getPackageMetaData() {
 		if ($this->packageMetaData === NULL) {
-			$this->packageMetaData = PackageMetaDataReader::readPackageMetaData($this);
+			if (is_file($this->getMetaPath() . 'package.xml')) {
+				$this->packageMetaData = PackageMetaDataReader::readPackageMetaData($this);
+			} else {
+				$this->packageMetaData = new MetaData($this->getPackageKey());
+			}
 		}
 		return $this->packageMetaData;
 	}
@@ -137,7 +163,6 @@ class Package implements PackageInterface {
 		return $this->packageKey;
 	}
 
-	/**
 	/**
 	 * Returns the PHP namespace of classes in this package.
 	 *
@@ -249,6 +274,19 @@ class Package implements PackageInterface {
 	}
 
 	/**
+	 * Set directories to be excluded from reflection
+	 *
+	 * @param String Comma separated list of subdirectories
+	 */
+	public function setExcludedDirectories($directoryList) {
+		$directories = explode(',', $directoryList);
+		array_walk($directories, function(&$value) {
+			$value = trim($value);
+		});
+		$this->excludeDirectoriesFromClassFiles = $directories;
+	}
+
+	/**
 	 * Returns the available documentations for this package
 	 *
 	 * @return array Array of \TYPO3\FLOW3\Package\Documentation
@@ -274,7 +312,19 @@ class Package implements PackageInterface {
 	}
 
 	/**
-	 * Builds and returns an array of class names => filenames of all
+	 * @todo WIP
+	 */
+	protected function getComposerManifest() {
+		if (!isset($this->composerManifest)) {
+			$json = file_get_contents($this->getPackagePath() . 'composer.json');
+			$this->composerManifest = json_decode($json);
+		}
+		return $this->composerManifest;
+	}
+
+
+	/**
+	 * Builds and returns an array of class names => file names of all
 	 * *.php files in the package's Classes directory and its sub-
 	 * directories.
 	 *
@@ -291,16 +341,20 @@ class Package implements PackageInterface {
 		$currentPath = $classesPath . $subDirectory;
 		$currentRelativePath = substr($currentPath, strlen($this->packagePath));
 
-		if (!is_dir($currentPath)) return array();
-		if ($recursionLevel > 100) throw new \TYPO3\FLOW3\Package\Exception('Recursion too deep.', 1166635495);
+		if (!is_dir($currentPath)) {
+			return array();
+		}
+		if ($recursionLevel > 100) {
+			throw new \TYPO3\FLOW3\Package\Exception('Recursion too deep.', 1166635495);
+		}
 
 		try {
 			$classesDirectoryIterator = new \DirectoryIterator($currentPath);
 			while ($classesDirectoryIterator->valid()) {
 				$filename = $classesDirectoryIterator->getFilename();
 				if ($filename[0] != '.') {
-					if (is_dir($currentPath . $filename)) {
-						$classFiles = array_merge($classFiles, $this->buildArrayOfClassFiles($classesPath, $extraNamespaceSegment, $subDirectory . $filename . '/', ($recursionLevel+1)));
+					if (is_dir($currentPath . $filename) && !in_array($filename, $this->excludeDirectoriesFromClassFiles)) {
+						$classFiles = array_merge($classFiles, $this->buildArrayOfClassFiles($classesPath, $extraNamespaceSegment, $subDirectory . $filename . '/', ($recursionLevel + 1)));
 					} else {
 						if (substr($filename, -4, 4) === '.php') {
 							$className = (str_replace('/', '\\', ($packageNamespace . '/' . $extraNamespaceSegment . substr($currentPath, strlen($classesPath)) . substr($filename, 0, -4))));
@@ -310,7 +364,6 @@ class Package implements PackageInterface {
 				}
 				$classesDirectoryIterator->next();
 			}
-
 		} catch (\Exception $exception) {
 			throw new \TYPO3\FLOW3\Package\Exception($exception->getMessage(), 1166633720);
 		}
