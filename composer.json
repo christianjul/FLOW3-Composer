@@ -14,11 +14,11 @@
 	"version": "dev-master",
 
 	"require": {
-		  "php" : ">5.3.2",
+		  "php" : ">=5.3.2",
 
-		  "ext-zlib": ">1.2.0",
+		  "ext-zlib": ">=1.2.0",
 		  "ext-SPL": "*",
-		  "ext-json": ">1.2.0",
+		  "ext-json": ">=1.2.0",
 		  "ext-session": "*",
 
 		  "TYPO3.Fluid": "dev-master"
