@@ -39,8 +39,10 @@ class Flow3PackageInstaller extends \Composer\Installer\LibraryInstaller {
 		$autoloadDefinition = $package->getAutoload();
 		if(isset($autoloadDefinition['psr-0'])) {
 			$namespace = key($autoloadDefinition['psr-0']);
+			$FLOW3StylePackageKey = str_replace('\\','.',$namespace);
+		} else {
+			$FLOW3StylePackageKey = $package->getName();
 		}
-		$FLOW3StylePackageKey = str_replace('\\','.',$namespace);
 		if($FLOW3StylePackageKey === 'Composer') {
 			//Composer will not work unless it has 2 levels to the config files
 			$FLOW3StylePackageKey = 'composer/composer';
