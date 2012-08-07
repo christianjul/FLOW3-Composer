@@ -24,8 +24,9 @@
 		  "TYPO3.Fluid": "dev-master",
 
 		  "doctrine/orm": "2.2.2",		 
-		  "symfony/yaml": "2.1.0",		 
-		  "symfony/dom-crawler": "2.0.16"		 
+
+		  "symfony/yaml": ">2.1.0",		 
+		  "symfony/dom-crawler": ">2.0.16"		 
 	},
 
 	"type": "composer-installer",
