@@ -22,7 +22,6 @@
 		  "ext-json": ">=1.2.0",
 		  "ext-session": "*",
 		  
-		  "TYPO3.Installer": "*",
 		  "TYPO3.Fluid": "*",
 
 		  "doctrine/orm": "2.2.2",		 
