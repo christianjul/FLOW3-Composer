@@ -1,5 +1,6 @@
 {
 	"name": "TYPO3.FLOW3",
+	"type": "framework",
 	"description": "FLOW3 - TYPO3's Application Framework",
 	"homepage": "http://flow3.typo3.org",
 	"keywords": ["framework"],
@@ -20,20 +21,13 @@
 		  "ext-SPL": "*",
 		  "ext-json": ">=1.2.0",
 		  "ext-session": "*",
-
+		  
+		  "TYPO3.Installer": "*",
 		  "TYPO3.Fluid": "*",
 
 		  "doctrine/orm": "2.2.2",		 
 
 		  "symfony/yaml": ">2.1.0",		 
 		  "symfony/dom-crawler": ">2.0.16"		 
-	},
-
-	"type": "composer-installer",
-	"extra": {
-		"class": "TYPO3\\FLOW3\\ComposerInstaller\\Flow3PackageInstaller"
-	},
-	"autoload": {
-		"psr-0": {"TYPO3\\FLOW3\\ComposerInstaller" : "Scripts/ComposerInstaller/PSR-0"}
 	}
 }
