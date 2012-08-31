@@ -1,6 +1,6 @@
 {
 	"name": "TYPO3.FLOW3",
-	"type": "framework",
+	"type": "flow3-framework",
 	"description": "FLOW3 - TYPO3's Application Framework",
 	"homepage": "http://flow3.typo3.org",
 	"keywords": ["framework"],
@@ -21,7 +21,8 @@
 		  "ext-SPL": "*",
 		  "ext-json": ">=1.2.0",
 		  "ext-session": "*",
-		  
+
+		  "christianjul/installers": "*",		  
 		  "TYPO3.Fluid": "*",
 
 		  "doctrine/orm": "2.2.2",		 
