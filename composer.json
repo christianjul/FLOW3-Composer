@@ -31,6 +31,8 @@
 		  "symfony/dom-crawler": ">2.0.16"
 	},
 	"autoload": {
-		"classmap": ["Scripts/Composer/"]
+		"psr-0": {
+			"TYPO3\\FLOW3\\Composer": "Scripts/Composer-PSR-0"
+		}
 	}
 }
