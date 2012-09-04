@@ -22,12 +22,16 @@
 		  "ext-json": ">=1.2.0",
 		  "ext-session": "*",
 
-		  "christianjul/installers": "*",		  
+		  "christianjul/installers": "*",
 		  "TYPO3.Fluid": "*",
 
-		  "doctrine/orm": "2.2.2",		 
+		  "doctrine/orm": "2.2.2",
 
-		  "symfony/yaml": ">2.1.0",		 
-		  "symfony/dom-crawler": ">2.0.16"		 
+		  "symfony/yaml": ">2.1.0",
+		  "symfony/dom-crawler": ">2.0.16"
+	},
+	"scripts": {
+		"post-package-install": "bingo\\huh.php",
+		"post-package-update": "foo\\bingo.php"
 	}
 }
