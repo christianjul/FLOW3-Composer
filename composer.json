@@ -30,8 +30,7 @@
 		  "symfony/yaml": ">2.1.0",
 		  "symfony/dom-crawler": ">2.0.16"
 	},
-	"scripts": {
-		"post-package-install": "bingo\\huh.php",
-		"post-package-update": "foo\\bingo.php"
+	"autoload": {
+		"classmap": ["Scripts/Composer/"]
 	}
 }
