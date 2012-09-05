@@ -316,29 +316,6 @@ class PackageManager implements \TYPO3\FLOW3\Package\PackageManagerInterface {
 	}
 
 	/**
-	 * Import a package from a remote location
-	 * Imports the specified package from a remote git repository. The imported package will not be activated automatically.
-	 * Currently only packages located at forge.typo3.org are supported. Note that the git binary must be available.
-	 *
-	 * @param string $packageKey The package key of the package to import.
-	 * @return \TYPO3\FLOW3\Package\PackageInterface The imported package
-	 * @throws \TYPO3\FLOW3\Package\Exception\PackageKeyAlreadyExistsException
-	 * @throws \TYPO3\FLOW3\Package\Exception\PackageRepositoryException
-	 */
-	public function importPackage($packageKey) {
-		if ($this->isPackageAvailable($packageKey)) {
-			throw new \TYPO3\FLOW3\Package\Exception\PackageKeyAlreadyExistsException('The package already exists.', 1315223754);
-		}
-
-		$packagesPath = Files::getUnixStylePath(Files::concatenatePaths(array($this->packagesBasePath, 'Application')));
-		$absolutePackagePath = Files::concatenatePaths(array($packagesPath, $packageKey)) . '/';
-		Files::createDirectoryRecursively($absolutePackagePath);
-
-		$this->clonePackageFromForge($packageKey, $absolutePackagePath);
-		$this->registerPackage($packageKey, Files::concatenatePaths(array('Application', $packageKey)));
-	}
-
-	/**
 	 * Clone package with $packageKey into $packagePath
 	 *
 	 * @param $packageKey The key of the package
