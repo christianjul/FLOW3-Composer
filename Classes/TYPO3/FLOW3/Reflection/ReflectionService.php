@@ -1012,7 +1012,14 @@ class ReflectionService {
 			$count = 0;
 			foreach ($newClassNames as $className) {
 				$count ++;
-				$this->reflectClass($className);
+				try{
+					$this->reflectClass($className);
+				} catch(Exception\ClassLoadingForReflectionFailedException $exception) {
+					/**
+					 * @todo log this
+					 */
+					continue;
+				}
 				if ($this->isClassAnnotatedWith($className, 'TYPO3\FLOW3\Annotations\Entity') || $this->isClassAnnotatedWith($className, 'Doctrine\ORM\Mapping\Entity') || $this->isClassAnnotatedWith($className, 'TYPO3\FLOW3\Annotations\ValueObject')) {
 					$scopeAnnotation = $this->getClassAnnotation($className, 'TYPO3\FLOW3\Annotations\Scope');
 					if ($scopeAnnotation !== NULL && $scopeAnnotation->value !== 'prototype') {
@@ -1045,8 +1052,7 @@ class ReflectionService {
 				// see bug http://forge.typo3.org/issues/29449 for details.
 				throw new Exception\InvalidClassException('The class with name "' . $className . '" is a Doctrine proxy. It is not supported to reflect doctrine proxy classes.', 1314944681);
 		}
-
-		$class = new ClassReflection($className);
+			$class = new ClassReflection($className);
 
 		if (!isset($this->classReflectionData[$className])) {
 			$this->classReflectionData[$className] = array();

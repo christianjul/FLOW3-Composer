@@ -88,23 +88,28 @@ class Package implements PackageInterface {
 	 * @throws \TYPO3\FLOW3\Package\Exception\InvalidPackageKeyException if an invalid package key was passed
 	 * @throws \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException if an invalid package path was passed
 	 */
-	public function __construct($packageKey, $packagePath, $classesPath = self::DIRECTORY_CLASSES) {
+	public function __construct($packageKey, $manifestPath, $classesPath = null) {
 		if (preg_match(self::PATTERN_MATCH_PACKAGEKEY, $packageKey) !== 1) {
 			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackageKeyException('"' . $packageKey . '" is not a valid package key.', 1217959510);
 		}
-		if (!(is_dir($packagePath) || (\TYPO3\FLOW3\Utility\Files::is_link($packagePath) && is_dir(realpath(rtrim($packagePath, '/')))))) {
+		if (!(is_dir($manifestPath) || (\TYPO3\FLOW3\Utility\Files::is_link($manifestPath) && is_dir(realpath(rtrim($manifestPath, '/')))))) {
 			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path does not exist or is no directory.', 1166631889);
 		}
-		if (substr($packagePath, -1, 1) !== '/') {
+		if (substr($manifestPath, -1, 1) !== '/') {
 			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path has no trailing forward slash.', 1166633720);
 		}
 		if (substr($classesPath, 1, 1) === '/') {
 			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package classes path has a leading forward slash.', 1334841320);
 		}
 
+		$this->manifestPath = $manifestPath;
 		$this->packageKey = $packageKey;
-		$this->packagePath = $packagePath;
-		$this->classesPath = $classesPath;
+		$this->resolvePackagePathfromManifest();
+		if (isset($this->getComposerManifest()->autoload->{'psr-0'})) {
+			$this->classesPath = $this->packagePath . $this->getComposerManifest()->autoload->{'psr-0'}->{$this->getPackageNamespace()};
+		} else {
+			$this->classesPath = $this->packagePath . $classesPath;
+		}
 	}
 
 	/**
@@ -139,7 +144,7 @@ class Package implements PackageInterface {
 	 */
 	public function getClassFiles() {
 		if (!is_array($this->classFiles)) {
-			$this->classFiles = $this->buildArrayOfClassFiles($this->packagePath . $this->classesPath);
+			$this->classFiles = $this->buildArrayOfClassFiles($this->classesPath . '/');
 		}
 		return $this->classFiles;
 	}
@@ -170,7 +175,21 @@ class Package implements PackageInterface {
 	 * @api
 	 */
 	public function getPackageNamespace() {
-		return str_replace('.', '\\', $this->packageKey);
+		$manifest = $this->getComposerManifest();
+		if (isset($manifest->autoload->{"psr-0"})) {
+			$nameSpaces = $manifest->autoload->{"psr-0"};
+			if (sizeof($nameSpaces) === 1) {
+				$nameSpace = key($nameSpaces);
+			} else {
+				/**
+				 * @todo throw meaningful exception with proper description
+				 */
+				throw new \TYPO3\FLOW3\Package\Exception\InvalidPackageStateException('Multiple namespaces in package not supported');
+			}
+		} else {
+			$nameSpace = str_replace('.', '\\', $this->getPackageKey());
+		}
+		return $nameSpace;
 	}
 
 	/**
@@ -213,6 +232,21 @@ class Package implements PackageInterface {
 		return $this->packagePath;
 	}
 
+	public function getManifestPath() {
+		return $this->manifestPath;
+	}
+
+	protected function resolvePackagePathfromManifest() {
+		$targetDir = $this->getComposerManifest('target-dir');
+		if (!is_null($targetDir)) {
+			$packagePath = str_replace($targetDir . '/', '', $this->manifestPath);
+		} else {
+			$packagePath = $this->manifestPath;
+		}
+
+		$this->packagePath = $packagePath;
+	}
+
 	/**
 	 * Returns the full path to this package's Classes directory
 	 *
@@ -220,7 +254,7 @@ class Package implements PackageInterface {
 	 * @api
 	 */
 	public function getClassesPath() {
-		return $this->packagePath . $this->classesPath;
+		return $this->classesPath;
 	}
 
 	/**
@@ -314,14 +348,22 @@ class Package implements PackageInterface {
 	/**
 	 * @todo WIP
 	 */
-	protected function getComposerManifest() {
+	protected function getComposerManifest($key = null) {
 		if (!isset($this->composerManifest)) {
-			$json = file_get_contents($this->getPackagePath() . 'composer.json');
+			$json = file_get_contents($this->getManifestPath() . 'composer.json');
 			$this->composerManifest = json_decode($json);
 		}
-		return $this->composerManifest;
+		if (!is_null($key)) {
+			if (isset($this->composerManifest->{$key})) {
+				$value = $this->composerManifest->{$key};
+			} else {
+				$value = null;
+			}
+		} else {
+			$value = $this->composerManifest;
+		}
+		return $value;
 	}
-
 
 	/**
 	 * Builds and returns an array of class names => file names of all
@@ -357,8 +399,10 @@ class Package implements PackageInterface {
 						$classFiles = array_merge($classFiles, $this->buildArrayOfClassFiles($classesPath, $extraNamespaceSegment, $subDirectory . $filename . '/', ($recursionLevel + 1)));
 					} else {
 						if (substr($filename, -4, 4) === '.php') {
-							$className = (str_replace('/', '\\', ($packageNamespace . '/' . $extraNamespaceSegment . substr($currentPath, strlen($classesPath)) . substr($filename, 0, -4))));
-							$classFiles[$className] = $currentRelativePath . $filename;
+							if (substr($filename, -4, 4) === '.php') {
+								$className = (str_replace('/', '\\', ($extraNamespaceSegment . substr($currentPath, strlen($classesPath)) . substr($filename, 0, -4))));
+								$classFiles[$className] = $currentRelativePath . $filename;
+							}
 						}
 					}
 				}

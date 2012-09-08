@@ -32,6 +32,7 @@
 	},
 	"autoload": {
 		"psr-0": {
+			"TYPO3\\FLOW3": "Classes",
 			"TYPO3\\FLOW3\\Composer": "Scripts/Composer-PSR-0"
 		}
 	}
