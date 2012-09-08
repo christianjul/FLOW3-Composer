@@ -23,7 +23,7 @@
 		  "ext-session": "*",
 
 		  "christianjul/installers": "*",
-		  "TYPO3.Fluid": "*",
+		  "typo3/fluid": "*",
 
 		  "doctrine/orm": "2.2.2",
 
@@ -32,7 +32,7 @@
 	},
 	"autoload": {
 		"psr-0": {
-			"TYPO3\\FLOW3": "Classes",
+			"TYPO3\\FLOW3": "Classes"
 		}
 	}
 }
