@@ -1,5 +1,5 @@
 {
-	"name": "TYPO3.FLOW3",
+	"name": "typo3/flow3",
 	"type": "flow3-framework",
 	"description": "FLOW3 - TYPO3's Application Framework",
 	"homepage": "http://flow3.typo3.org",
@@ -33,7 +33,6 @@
 	"autoload": {
 		"psr-0": {
 			"TYPO3\\FLOW3": "Classes",
-			"TYPO3\\FLOW3\\Composer": "Scripts/Composer-PSR-0"
 		}
 	}
 }
