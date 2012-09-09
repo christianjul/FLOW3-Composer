@@ -9,6 +9,7 @@ class InstallerScripts
 	static public function postUpdateAndInstall(Event $event) {
 		Files::createDirectoryRecursively('Configuration');
 		Files::copyDirectoryRecursively('Packages/Framework/TYPO3.FLOW3/Resources/Private/Installer', '.');
+		chmod('flow3',0755);
 	}
 
 }
