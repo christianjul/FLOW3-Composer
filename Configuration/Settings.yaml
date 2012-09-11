@@ -36,6 +36,9 @@ TYPO3:
       # The constant PHP_BINDIR usually contains the path, but on Windows this doesn't work reliably
       phpBinaryPathAndFilename: '%PHP_BINDIR%/php'
 
+      # optional list of variables (key: value) that will be set for all FLOW3 CLI sub requests
+      subRequestEnvironmentVariables: []
+
     error:
 
       exceptionHandler:
@@ -43,6 +46,24 @@ TYPO3:
         # Defines the global, last-resort exception handler.
         # The specified class must implement \TYPO3\FLOW3\Error\ExceptionHandlerInterface
         className: TYPO3\FLOW3\Error\ProductionExceptionHandler
+
+        # Rendering groups can define special renderings depending on status code or class of the
+        # thrown exception. This is only used by the Production Exception Handler
+        renderingGroups:
+
+          notFoundExceptions:
+            matchingStatusCodes: [404]
+            options:
+              fluidTemplate: 'resource://TYPO3.FLOW3/Private/Templates/Error/Default.html'
+              variables:
+                errorDescription: 'Sorry, the page you requested was not found.'
+
+          databaseConnectionExceptions:
+            matchingExceptionClassNames: ['TYPO3\FLOW3\Persistence\Doctrine\DatabaseConnectionException']
+            options:
+              fluidTemplate: 'resource://TYPO3.FLOW3/Private/Error/Default_Template.html'
+              variables:
+                errorDescription: 'Sorry, the database connection couldn\'t be established.'
 
       errorHandler:
 
@@ -83,6 +104,15 @@ TYPO3:
            logFilesToKeep: 1
            logIpAddress: TRUE
 
+      sqlLogger:
+        backend: TYPO3\FLOW3\Log\Backend\FileBackend
+        backendOptions:
+          logFileURL: %FLOW3_PATH_DATA%Logs/Query.log
+          createParentDirectories: TRUE
+          severityThreshold: %LOG_INFO%
+          maximumLogFileSize: 10485760
+          logFilesToKeep: 1
+
     i18n:
 
       # The default locale identifier.
@@ -94,12 +124,6 @@ TYPO3:
         strict: FALSE
         # The locales identifiers to use in their desired order
         order: []
-
-    mvc:
-
-      # Object name of the controller to use if no other controller could be resolved
-      # matching the request.
-      notFoundController: TYPO3\FLOW3\Mvc\Controller\NotFoundController
 
     object:
 
@@ -199,7 +223,7 @@ TYPO3:
         # You'll need to configure your own authentication provider depending on your use case.
         # Below you find an example which uses simple username/password authentication. In
         # case the user is not logged in, the web redirect entry point, which redirects her
-        # to the URI login/form/action where the login form resides.
+        # to the login action that displays the authentication form.
         #
         #  AdminInterfaceProvider:
         #    provider: 'PersistedUsernamePasswordProvider'
@@ -209,7 +233,11 @@ TYPO3:
         #      controllerObjectName: 'TYPO3\Admin\Controller\.*'
         #    entryPoint: 'WebRedirect'
         #    entryPointOptions:
-        #      uri: 'login/form/action'
+        #      routeValues:
+        #        '@package': 'Your.Package'
+        #        '@controller': 'Authenticate'
+        #        '@action': 'login'
+        #        '@format': 'html'
         providers: []
 
         # One of the available authentication strategies:
@@ -331,6 +359,9 @@ TYPO3:
 
           # Allow http access only.
           httponly: TRUE
+
+          # Restrict cookie to a specific domain.
+          domain: NULL
 
     utility:
       environment:

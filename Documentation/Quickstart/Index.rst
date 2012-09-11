@@ -72,7 +72,7 @@ write access to certain directories for both, you will need to set the file perm
 accordingly. But don't worry, this is simply done by changing to the FLOW3 base directory
 (``Quickstart`` in the above example) and calling the following command:
 
-.. code-block:: bash
+.. code-block:: none
 
 	./flow3 core:setfilepermissions john www-data www-data
 
@@ -100,8 +100,8 @@ new group membership to take effect.
 .. note::
 
 	Setting file permissions is not necessary and not possible on Windows machines.
-	For Apache to be able to create symlinks, it needs to be started with Administrator
-	privileges, though.
+	For Apache to be able to create symlinks, you need to use Windows Vista (or
+	newer) and Apache needs to be started with Administrator privileges.
 
 Setting up a virtual host
 -------------------------

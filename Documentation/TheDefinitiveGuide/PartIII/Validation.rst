@@ -1,4 +1,4 @@
-﻿==========
+﻿﻿==========
 Validation
 ==========
 
@@ -10,12 +10,12 @@ While validation itself is quite simple, embedding it into the rest of the frame
 If the user has entered a wrong value, the original page has to be re-displayed, and the user
 needs some well-readable information on what data he should enter.
 
-This chapter will explain:
+This chapter explains:
 
-* ... how to use the validators being part of FLOW3
-* ... how to write your own validators
-* ... how to use validation in your own code
-* ... how validation is embedded in the model, the persistence and the MVC layer
+* how to use the validators being part of FLOW3
+* how to write your own validators
+* how to use validation in your own code
+* how validation is embedded in the model, the persistence and the MVC layer
 
 Automatic Validation Throughout The Framework
 =============================================
@@ -207,6 +207,11 @@ certain validation groups are executed:
 * In MVC, the validation group ``Default`` and ``Controller`` is used.
 * In persistence, the validation group ``Default`` and ``Persistence`` is used.
 
+Additionally, it is possible to specify a list of validation groups at each controller action
+via the ``@FLOW3\ValidationGroups`` annotation. This way, you can override the default
+validation groups that are invoked on this action call, for example when you need to
+validate uniqueness of a property like an e-mail adress only in your createAction.
+
 A validator is only executed if at least one validation group overlap.
 
 The following example demonstrates this::
@@ -230,13 +235,30 @@ The following example demonstrates this::
 		/**
 		 * @FLOW3\Validate(type="NotEmpty", validationGroups={"Controller"})
 		 */
-		protected $prop3;
+		protected $prop4;
+
+		/**
+		 * @FLOW3\Validate(type="NotEmpty", validationGroups={"createAction"})
+		 */
+		protected $prop5;
+	}
+
+	class CommentController extends \TYPO3\FLOW3\Mvc\Controller\ActionController {
+
+		/**
+		 * @param Comment $comment
+		 * @FLOW3\ValidationGroups({"createAction"})
+		 */
+		public function createAction(Comment $comment) {
+			...
+		}
 	}
 
 * validation for prop1 and prop2 are the same, as the "Default" validation group is added if none is specified
 * validation for prop1 and prop2 are executed both on persisting and inside the controller
 * validation for $prop3 is only executed in persistence, but not in controller
 * validation for $prop4 is only executed in controller, but not in persistence
+* validation for $prop5 is only executed in createAction, but not in persistence
 
 If interacting with the ``ValidatorResolver`` directly, the to-be-used validation groups
 can be specified as the last argument of ``getBaseValidatorConjunction()``.

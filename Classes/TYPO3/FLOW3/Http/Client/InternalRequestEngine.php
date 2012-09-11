@@ -21,8 +21,6 @@ use TYPO3\FLOW3\Mvc\Routing\Route;
  * HTTP requests internally.
  *
  * This engine is particularly useful in functional test scenarios.
- *
- * @FLOW3\Scope("singleton")
  */
 class InternalRequestEngine implements RequestEngineInterface {
 
@@ -86,7 +84,7 @@ class InternalRequestEngine implements RequestEngineInterface {
 		try {
 			$actionRequest = $this->router->route($request);
 			$this->securityContext->clearContext();
-			$this->securityContext->injectRequest($actionRequest);
+			$this->securityContext->setRequest($actionRequest);
 
 			$this->dispatcher->dispatch($actionRequest, $response);
 		} catch (\Exception $exception) {
@@ -98,7 +96,12 @@ class InternalRequestEngine implements RequestEngineInterface {
 			$content .= 'in line ' . $exception->getLine() . PHP_EOL . PHP_EOL;
 			$content .= \TYPO3\FLOW3\Error\Debugger::getBacktraceCode($exception->getTrace(), FALSE, TRUE) . PHP_EOL;
 
-			$response->setStatus(500);
+			if ($exception instanceof \TYPO3\FLOW3\Exception) {
+				$statusCode = $exception->getStatusCode();
+			} else {
+				$statusCode = 500;
+			}
+			$response->setStatus($statusCode);
 			$response->setContent($content);
 			$response->setHeader('X-FLOW3-ExceptionCode', $exceptionCodeNumber);
 			$response->setHeader('X-FLOW3-ExceptionMessage', $exception->getMessage());
@@ -107,7 +110,7 @@ class InternalRequestEngine implements RequestEngineInterface {
 	}
 
 	/**
-	 * Returns the router used by this request engine
+	 * Returns the router used by this internal request engine
 	 *
 	 * @return \TYPO3\FLOW3\Mvc\Routing\Router
 	 */

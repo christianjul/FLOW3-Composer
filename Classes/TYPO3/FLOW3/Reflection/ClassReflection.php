@@ -23,7 +23,7 @@ class ClassReflection extends \ReflectionClass {
 	/**
 	 * Constructor
 	 *
-	 * @param mixed $classNameOrObject the name of the class or the obejct to be reflected.
+	 * @param mixed $classNameOrObject the name of the class or the object to be reflected.
 	 */
 	public function __construct($classNameOrObject) {
 		$throwExceptionOnUnloadedClasses =

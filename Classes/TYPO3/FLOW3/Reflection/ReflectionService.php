@@ -1392,7 +1392,7 @@ class ReflectionService {
 		if ($parameterClass !== NULL) {
 			$parameterInformation[self::DATA_PARAMETER_CLASS] = $parameterClass->getName();
 		}
-		if ($parameter->isDefaultValueAvailable()) {
+		if ($parameter->isOptional() && $parameter->isDefaultValueAvailable()) {
 			$parameterInformation[self::DATA_PARAMETER_DEFAULT_VALUE] = $parameter->getDefaultValue();
 		}
 		if ($method !== NULL) {

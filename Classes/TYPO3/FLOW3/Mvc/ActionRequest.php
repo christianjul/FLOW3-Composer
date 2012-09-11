@@ -180,7 +180,7 @@ class ActionRequest implements RequestInterface {
 	 * Returns an ActionRequest which referred to this request, if any.
 	 *
 	 * The referring request is not set or determined automatically but must be
-	 * explictly set through the corresponding internal argument "__referrer".
+	 * explicitly set through the corresponding internal argument "__referrer".
 	 * This mechanism is used by FLOW3's form and validation mechanisms.
 	 *
 	 * @return \TYPO3\FLOW3\Mvc\ActionRequest the referring request, or NULL if no referrer found
@@ -222,6 +222,10 @@ class ActionRequest implements RequestInterface {
 	 */
 	public function setDispatched($flag) {
 		$this->dispatched = $flag ? TRUE : FALSE;
+
+		if ($flag) {
+			$this->emitRequestDispatched($this);
+		}
 	}
 
 	/**
@@ -408,9 +412,9 @@ class ActionRequest implements RequestInterface {
 		$controllerObjectName = $this->getControllerObjectName();
 		if ($controllerObjectName !== '' && ($this->controllerActionName === strtolower($this->controllerActionName)))  {
 			$controllerClassName = $this->objectManager->getClassNameByObjectName($controllerObjectName);
-			$actionMethodName = $this->controllerActionName . 'Action';
+			$lowercaseActionMethodName = strtolower($this->controllerActionName) . 'action';
 			foreach (get_class_methods($controllerClassName) as $existingMethodName) {
-				if (strtolower($existingMethodName) === strtolower($actionMethodName)) {
+				if (strtolower($existingMethodName) === $lowercaseActionMethodName) {
 					$this->controllerActionName = substr($existingMethodName, 0, -6);
 					break;
 				}
@@ -594,6 +598,25 @@ class ActionRequest implements RequestInterface {
 	 */
 	public function getFormat() {
 		return $this->format;
+	}
+
+	/**
+	 * Emits a signal when a Request has been dispatched
+	 *
+	 * The action request is not proxyable, so the signal is dispatched manually here.
+	 * The safeguard allows unit tests without the dispatcher dependency.
+	 *
+	 * @param \TYPO3\FLOW3\Configuration\ConfigurationManager $configurationManager
+	 * @return void
+	 * @FLOW3\Signal
+	 */
+	protected function emitRequestDispatched($request) {
+		if ($this->objectManager !== NULL) {
+			$dispatcher = $this->objectManager->get('TYPO3\FLOW3\SignalSlot\Dispatcher');
+			if ($dispatcher !== NULL) {
+				$dispatcher->dispatch('TYPO3\FLOW3\Mvc\ActionRequest', 'requestDispatched', array($request));
+			}
+		}
 	}
 
 	/**
