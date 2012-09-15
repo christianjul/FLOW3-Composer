@@ -133,6 +133,15 @@ TYPO3:
       # testing context.
       registerFunctionalTestClasses: FALSE
 
+      #
+      #
+      excludeClasses:
+       'Doctrine.ORM' : ['Doctrine\\ORM\\Mapping\\.*', 'Doctrine\\ORM\\Tools\\.*']
+       'Doctrine.DBAL' : ['Doctrine\\DBAL\\Tools\\.*']
+       'symfony.domcrawler' : ['Symfony\\Component\\DomCrawler\\Tests\\.*']
+       'symfony.yaml' : ['Symfony\\Component\\Yaml\\Tests\\.*']
+
+
     package:
 
       git:

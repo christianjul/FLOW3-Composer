@@ -117,7 +117,10 @@ class PackageCommandController extends \TYPO3\FLOW3\Cli\CommandController {
 		$fullPackagePath =  $packagePath . '/' . $packageKey . '/';
 
 		try {
-			$this->packageManager->registerPackage($packageKey, $fullPackagePath, $classesPath, $excludeDirectories);
+			/**
+ 			 * @todo update call, signature has changed
+			 */
+			$this->packageManager->registerPackage($packageKey, $fullPackagePath, $classesPath);
 			$this->packageManager->activatePackage($packageKey);
 			Scripts::executeCommand('typo3.flow3:cache:flush', $this->settings, FALSE);
 		} catch (\TYPO3\FLOW3\Package\Exception $exception) {

@@ -205,7 +205,34 @@ class CompileTimeObjectManager extends ObjectManager {
 				$availableClassNames[$packageKey] = array_unique($availableClassNames[$packageKey]);
 			}
 		}
-		return $availableClassNames;
+
+		return $this->filterClassNamesFromConfiguration($availableClassNames);
+	}
+
+	protected function filterClassNamesFromConfiguration($classNames) {
+		if (isset($this->allSettings['TYPO3']['FLOW3']['object']) && isset($this->allSettings['TYPO3']['FLOW3']['object']['excludeClasses'])) {
+			if (!is_array($this->allSettings['TYPO3']['FLOW3']['object']['excludeClasses'])) {
+				throw new \TYPO3\FLOW3\Configuration\Exception\InvalidConfigurationTypeException('The configuration for "TYPO3.FLOW3.object.excludeClasses" is invalid');
+			}
+			foreach ($this->allSettings['TYPO3']['FLOW3']['object']['excludeClasses'] as $packageName => $filterExpressions) {
+				if (!array_key_exists($packageName, $classNames)) {
+					throw new \TYPO3\FLOW3\Configuration\Exception\NoSuchOptionException('The specified packageName "' . $packageName . '" in configuration "TYPO3.FLOW3.object.excludeClasses" does not exist or is not activated');
+				}
+				if (!is_array($filterExpressions)) {
+					throw new \TYPO3\FLOW3\Configuration\Exception\InvalidConfigurationTypeException('The configuration for "TYPO3.FLOW3.object.excludeClasses.\'' . $packageName . '\'" is not a valid list');
+				}
+				foreach ($filterExpressions as $filterExpression) {
+					$classNames[$packageName] = array_filter(
+						$classNames[$packageName],
+						function ($className) use ($filterExpression) {
+							$match = preg_match('/' . $filterExpression . '/', $className);
+							return $match !== 1;
+						}
+					);
+				}
+			}
+		}
+		return $classNames;
 	}
 
 	/**

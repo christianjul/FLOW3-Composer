@@ -64,13 +64,6 @@ class Package implements PackageInterface {
 	protected $classFiles;
 
 	/**
-	 * Array of directories in class to exclude from reflected classes
-	 *
-	 * @var array
-	 */
-	protected $excludeDirectoriesFromClassFiles = array();
-
-	/**
 	 * If enabled, the files in the Classes directory are registered and Reflection, Dependency Injection, AOP etc. are supported.
 	 * Disable this flag if you don't need object management for your package and want to save some memory.
 	 *
@@ -308,19 +301,6 @@ class Package implements PackageInterface {
 	}
 
 	/**
-	 * Set directories to be excluded from reflection
-	 *
-	 * @param String Comma separated list of subdirectories
-	 */
-	public function setExcludedDirectories($directoryList) {
-		$directories = explode(',', $directoryList);
-		array_walk($directories, function(&$value) {
-			$value = trim($value);
-		});
-		$this->excludeDirectoriesFromClassFiles = $directories;
-	}
-
-	/**
 	 * Returns the available documentations for this package
 	 *
 	 * @return array Array of \TYPO3\FLOW3\Package\Documentation
@@ -378,7 +358,6 @@ class Package implements PackageInterface {
 	 * @throws \TYPO3\FLOW3\Package\Exception if recursion into directories was too deep or another error occurred
 	 */
 	protected function buildArrayOfClassFiles($classesPath, $extraNamespaceSegment = '', $subDirectory = '', $recursionLevel = 0) {
-		$packageNamespace = $this->getPackageNamespace();
 		$classFiles = array();
 		$currentPath = $classesPath . $subDirectory;
 		$currentRelativePath = substr($currentPath, strlen($this->packagePath));
@@ -395,7 +374,7 @@ class Package implements PackageInterface {
 			while ($classesDirectoryIterator->valid()) {
 				$filename = $classesDirectoryIterator->getFilename();
 				if ($filename[0] != '.') {
-					if (is_dir($currentPath . $filename) && !in_array($filename, $this->excludeDirectoriesFromClassFiles)) {
+					if (is_dir($currentPath . $filename)) {
 						$classFiles = array_merge($classFiles, $this->buildArrayOfClassFiles($classesPath, $extraNamespaceSegment, $subDirectory . $filename . '/', ($recursionLevel + 1)));
 					} else {
 						if (substr($filename, -4, 4) === '.php') {

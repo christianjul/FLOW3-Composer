@@ -460,30 +460,20 @@ class PackageManager implements \TYPO3\FLOW3\Package\PackageManagerInterface {
 	 * @param $packageKey The Package key
 	 * @param $packagePath The configurations of the package from Packagestates
 	 * @param $classesPath Path (within the package) to the directory where the PSR-0 compatible classes are located.
-	 * @param $excludeDirectories Directories containing files that should be excluded from use in FLOW3 - most cases test-files
 	 * @param $doNotSortAndSave allows for not saving packagestates when used in loops etc.
 	 * @return PackageInterface
 	 *
 	 * @throws Exception\CorruptPackageException
 	 */
-	public function registerPackage(PackageInterface $package, $excludeDirectories = null, $doNotSortAndSave = FALSE) {
+	public function registerPackage(PackageInterface $package, $doNotSortAndSave = FALSE) {
 		$packageKey = $package->getPackageKey();
 		if ($this->isPackageAvailable($packageKey)) {
 			throw new Exception\InvalidPackageStateException('Package "' . $packageKey . '" is already registered.', 1338996122);
 		}
 
-		/**
-		 * @todo $stateConfiguration does not get passed, make test and implement
-		 */
-		if (is_string($excludeDirectories)) {
-			$package->setExcludedDirectories($excludeDirectories);
-		}
 		$this->packages[$package->getPackageKey()] = $package;
-		$this->packageStatesConfiguration['packages'][$packageKey]['packagePath'] = str_replace($this->packagesBasePath, '', $package->getPackageNamespace());
+		$this->packageStatesConfiguration['packages'][$packageKey]['packagePath'] = str_replace($this->packagesBasePath, '', $package->getPackagePath());
 		$this->packageStatesConfiguration['packages'][$packageKey]['classesPath'] = $package->getClassesPath();
-		if ($excludeDirectories) {
-			$this->packageStatesConfiguration['packages'][$packageKey]['excludeDirectories'] = $excludeDirectories;
-		}
 
 		if (!$doNotSortAndSave) {
 			$this->sortAndSavePackageStates();
@@ -640,12 +630,10 @@ class PackageManager implements \TYPO3\FLOW3\Package\PackageManagerInterface {
 
 			$packagePath = isset($stateConfiguration['packagePath']) ? $stateConfiguration['packagePath'] : null;
 			$classesPath = isset($stateConfiguration['classesPath']) ? $stateConfiguration['classesPath'] : null;
-			$excludeDirectories = isset($stateConfiguration['excludeDirectories']) ? $stateConfiguration['excludeDirectories'] : null;
-
 
 			$package = PackageFactory::buildPackage($this->packagesBasePath, $packagePath, $packageKey, $classesPath);
 
-			$this->registerPackage($package, $excludeDirectories, TRUE);
+			$this->registerPackage($package, TRUE);
 
 			if (!$this->packages[$packageKey] instanceof PackageInterface) {
 				throw new \TYPO3\FLOW3\Package\Exception\CorruptPackageException(sprintf('The package class in package "%s" does not implement PackageInterface.', $packageKey), 1300782487);
