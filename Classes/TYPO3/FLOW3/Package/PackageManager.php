@@ -584,7 +584,7 @@ class PackageManager implements \TYPO3\FLOW3\Package\PackageManagerInterface {
 
 		foreach ($packagePaths as $packagePath) {
 			$packageKey = PackageFactory::getPackageKeyFromManifestPath($packagePath,$this->packagesBasePath);
-			$packageState = PackageFactory::buildStateConfigurationFromPath($packagePath,$this->packagesBasePath);
+			$packageState = PackageFactory::buildStateConfigurationFromPath($packagePath,$this->packagesBasePath,$this->packageStatesConfiguration['packages'][$packageKey]);
 			$this->packageStatesConfiguration['packages'][$packageKey] = $packageState;
 		}
 

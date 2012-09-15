@@ -34,19 +34,18 @@ class PackageFactory {
 
 		$package = new $packageClassName($packageKey, $packagePath, $classesPath);
 		return $package;
-
 	}
 
 	public static function buildPackageFromStateConfiguration($stateConfiguration) {
-
 	}
 
-	public static function buildStateConfigurationFromPath($packagePath,$packagesBasePath) {
+	public static function buildStateConfigurationFromPath($packagePath, $packagesBasePath, $currentConfiguration) {
 
-/*		if (isset($this->packages[$packageKey])) {
-			throw new \TYPO3\FLOW3\Package\Exception\DuplicatePackageException('Detected a duplicate package, remove either "' . $this->packages[$packageKey]->getPackagePath() . '" or "' . $packagePath . '".', 1253716811);
-		}*/
-		$stateConfiguration['state'] = 'active';
+		if (isset($currentConfiguration['state'])) {
+			$stateConfiguration['state'] = $currentConfiguration['state'];
+		} else {
+			$stateConfiguration['state'] = 'active';
+		}
 
 		$stateConfiguration['packagePath'] = str_replace($packagesBasePath, '', $packagePath);
 
