@@ -317,27 +317,6 @@ class PackageManager implements \TYPO3\FLOW3\Package\PackageManagerInterface {
 	}
 
 	/**
-	 * Clone package with $packageKey into $packagePath
-	 *
-	 * @param $packageKey The key of the package
-	 * @param $packagePath The path to clone into
-	 * @throws Exception\PackageRepositoryException
-	 */
-	protected function clonePackageFromForge($packageKey, $packagePath) {
-		exec($this->settings['package']['git']['gitBinary'] . ' --version', $output, $result);
-		if ($result !== 0) {
-			throw new \TYPO3\FLOW3\Package\Exception\PackageRepositoryException('Could not execute the git command line tool. Make sure to configure the right path in TYPO3:FLOW3:package:git:gitBinary.', 1315223755);
-		}
-		unset($output);
-
-		$gitCommand = ' clone --recursive git://git.typo3.org/FLOW3/Packages/' . $packageKey . '.git ' . $packagePath;
-		exec($this->settings['package']['git']['gitBinary'] . $gitCommand, $output, $result);
-		if ($result !== 0) {
-			throw new \TYPO3\FLOW3\Package\Exception\PackageRepositoryException('Could not clone the remote package.' . PHP_EOL . 'git ' . $gitCommand, 1315223852);
-		}
-	}
-
-	/**
 	 * Deactivates a package
 	 *
 	 * @param string $packageKey The package to deactivate

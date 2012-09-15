@@ -144,10 +144,6 @@ TYPO3:
 
     package:
 
-      git:
-
-        # The full path and filename of the git binary.
-        gitBinary: '/usr/bin/env git'
 
     persistence:
 
