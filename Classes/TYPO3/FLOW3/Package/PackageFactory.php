@@ -16,7 +16,7 @@ use TYPO3\FLOW3\Utility\Files;
 class PackageFactory {
 
 	public static function buildPackage($packagesBasePath, $manifestPath, $packageKey, $classesPath) {
-		$packageClassPathAndFilename = Files::concatenatePaths(array($packagesBasePath, $manifestPath, 'Classes/' . str_replace('.','/',$packageKey) . '/Package.php'));
+		$packageClassPathAndFilename = Files::concatenatePaths(array($packagesBasePath, $manifestPath, 'Classes/' . str_replace('.', '/', $packageKey) . '/Package.php'));
 		if (file_exists($packageClassPathAndFilename)) {
 			require_once($packageClassPathAndFilename);
 			/**
@@ -59,7 +59,7 @@ class PackageFactory {
 	 * @param $manifestPath
 	 * @return string
 	 */
-	public static function getPackageKeyFromManifestPath($manifestPath,$packagesBasePath) {
+	public static function getPackageKeyFromManifestPath($manifestPath, $packagesBasePath) {
 		$composerJson = file_get_contents($manifestPath . '/composer.json');
 		$manifest = json_decode($composerJson);
 		if (substr($manifest->type, 0, 6) === 'flow3-') {
@@ -68,9 +68,10 @@ class PackageFactory {
 			/**
 			 * @todo check that manifest name and directory follows convention
 			 */
-			/*				if($manifest->name !== strtolower($directoryName)) {
-				   throw new \TYPO3\FLOW3\Package\Exception\InvalidPackageKeyException('buuh!');
-			   }*/
+			/*		if($manifest->name !== strtolower($directoryName)) {
+						throw new \TYPO3\FLOW3\Package\Exception\InvalidPackageKeyException('buuh!');
+					}
+			*/
 		} else {
 			$packageKey = str_replace('/', '.', $manifest->name);
 
@@ -88,6 +89,5 @@ class PackageFactory {
 		$packageKey = preg_replace('/[^A-Za-z0-9.]/', '', $packageKey);
 		return $packageKey;
 	}
-
-
 }
+?>
