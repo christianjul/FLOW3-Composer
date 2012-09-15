@@ -140,7 +140,7 @@ TYPO3:
        'Doctrine.DBAL' : ['Doctrine\\DBAL\\Tools\\.*', 'Doctrine\\DBAL\\Driver\\.*', , 'Doctrine\\DBAL\\Platforms\\.*']
        'symfony.domcrawler' : ['Symfony\\Component\\DomCrawler\\Tests\\.*']
        'symfony.yaml' : ['Symfony\\Component\\Yaml\\Tests\\.*']
-
+       'christianjul.installers': ['.*'] #workaround, should rather be inactivated
 
     package:
 
