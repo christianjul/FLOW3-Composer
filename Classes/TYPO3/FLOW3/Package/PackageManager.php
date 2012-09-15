@@ -561,9 +561,26 @@ class PackageManager implements \TYPO3\FLOW3\Package\PackageManagerInterface {
 			}
 		}
 
+		/**
+ 		 * @todo similar functionality in registerPackage - should be refactored
+		 */
 		foreach ($packagePaths as $packagePath) {
 			$packageKey = PackageFactory::getPackageKeyFromManifestPath($packagePath,$this->packagesBasePath);
-			$packageState = PackageFactory::buildStateConfigurationFromPath($packagePath,$this->packagesBasePath,$this->packageStatesConfiguration['packages'][$packageKey]);
+			if ($this->packageStatesConfiguration['packages'][$packageKey]['state']) {
+				$packageState['state'] = $this->packageStatesConfiguration['packages'][$packageKey]['state'];
+			} else {
+				if($this->settings['package']['inactiveByDefault'][$packageKey] === TRUE) {
+					$packageState['state'] = 'inactive';
+				} else {
+					$packageState['state'] = 'active';
+				}
+			}
+
+			$packageState['packagePath'] = str_replace($this->packagesBasePath, '', $packagePath);
+
+			// Change this to read the target from Composer or any other source
+			$packageState['classesPath'] = Package::DIRECTORY_CLASSES;
+
 			$this->packageStatesConfiguration['packages'][$packageKey] = $packageState;
 		}
 

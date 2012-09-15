@@ -144,6 +144,10 @@ TYPO3:
 
     package:
 
+      #
+      #
+      inactiveByDefault:
+        'christianjul.installers': TRUE
 
     persistence:
 

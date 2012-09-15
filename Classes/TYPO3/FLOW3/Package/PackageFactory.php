@@ -36,25 +36,6 @@ class PackageFactory {
 		return $package;
 	}
 
-	public static function buildPackageFromStateConfiguration($stateConfiguration) {
-	}
-
-	public static function buildStateConfigurationFromPath($packagePath, $packagesBasePath, $currentConfiguration) {
-
-		if (isset($currentConfiguration['state'])) {
-			$stateConfiguration['state'] = $currentConfiguration['state'];
-		} else {
-			$stateConfiguration['state'] = 'active';
-		}
-
-		$stateConfiguration['packagePath'] = str_replace($packagesBasePath, '', $packagePath);
-
-		// Change this to read the target from Composer or any other source
-		$stateConfiguration['classesPath'] = Package::DIRECTORY_CLASSES;
-
-		return $stateConfiguration;
-	}
-
 	/**
 	 * @param $manifestPath
 	 * @return string
