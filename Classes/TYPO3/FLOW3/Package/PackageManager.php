@@ -566,9 +566,12 @@ class PackageManager implements \TYPO3\FLOW3\Package\PackageManagerInterface {
 		 */
 		foreach ($packagePaths as $packagePath) {
 			$packageKey = PackageFactory::getPackageKeyFromManifestPath($packagePath,$this->packagesBasePath);
-			if ($this->packageStatesConfiguration['packages'][$packageKey]['state']) {
+			if (isset($this->packageStatesConfiguration['packages'][$packageKey]['state'])) {
 				$packageState['state'] = $this->packageStatesConfiguration['packages'][$packageKey]['state'];
 			} else {
+				/**
+ 				 * @todo doesn't work, settings not available at this time
+				 */
 				if($this->settings['package']['inactiveByDefault'][$packageKey] === TRUE) {
 					$packageState['state'] = 'inactive';
 				} else {
