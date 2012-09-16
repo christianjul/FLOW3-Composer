@@ -136,8 +136,9 @@ TYPO3:
       #
       #
       excludeClasses:
-       'Doctrine.ORM' : ['Doctrine\\ORM\\Tools\\.*', 'Doctrine\\ORM\\Mapping\\.*']
-       'Doctrine.DBAL' : ['Doctrine\\DBAL\\Tools\\.*', 'Doctrine\\DBAL\\Driver\\.*', , 'Doctrine\\DBAL\\Platforms\\.*']
+       'Doctrine.Common' : ['.*']
+       'Doctrine.ORM' : ['.*']
+       'Doctrine.DBAL' : ['.*']
        'symfony.domcrawler' : ['Symfony\\Component\\DomCrawler\\Tests\\.*']
        'symfony.yaml' : ['Symfony\\Component\\Yaml\\Tests\\.*']
        'christianjul.installers': ['.*'] #workaround, should rather be inactivated
