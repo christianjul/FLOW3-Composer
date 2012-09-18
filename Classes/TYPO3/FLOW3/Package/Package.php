@@ -69,20 +69,33 @@ class Package implements PackageInterface {
 	 * Constructor
 	 *
 	 * @param string $packageKey Key of this package
-	 * @param string $packagePath Absolute path to the package's main directory
-	 * @param string $classesPath Path the classes of the package are in, relative to $packagePath. Optional, defaults to 'Classes'
+	 * @param string $manifestPath Absolute path to the location of the package's composer manifest
+	 * @param string $classesPath Path the classes of the package are in, relative to $packagePath.Optional, read from Composer manifest if not set
 	 * @throws \TYPO3\FLOW3\Package\Exception\InvalidPackageKeyException if an invalid package key was passed
 	 * @throws \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException if an invalid package path was passed
 	 */
-	public function __construct($packageKey, $packagePath, $classesPath = self::DIRECTORY_CLASSES) {
-		if (preg_match(self::PATTERN_MATCH_PACKAGEKEY, $packageKey) !== 1) throw new \TYPO3\FLOW3\Package\Exception\InvalidPackageKeyException('"' . $packageKey . '" is not a valid package key.', 1217959510);
-		if (!(is_dir($packagePath) || (\TYPO3\FLOW3\Utility\Files::is_link($packagePath) && is_dir(realpath(rtrim($packagePath, '/')))))) throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path does not exist or is no directory.', 1166631889);
-		if (substr($packagePath, -1, 1) !== '/') throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path has no trailing forward slash.', 1166633720);
-		if (substr($classesPath, 1, 1) === '/') throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package classes path has a leading forward slash.', 1334841320);
+	public function __construct($packageKey, $manifestPath, $classesPath = NULL) {
+		if (preg_match(self::PATTERN_MATCH_PACKAGEKEY, $packageKey) !== 1) {
+			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackageKeyException('"' . $packageKey . '" is not a valid package key.', 1217959510);
+		}
+		if (!(is_dir($manifestPath) || (\TYPO3\FLOW3\Utility\Files::is_link($manifestPath) && is_dir(realpath(rtrim($manifestPath, '/')))))) {
+			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path does not exist or is no directory.', 1166631889);
+		}
+		if (substr($manifestPath, -1, 1) !== '/') {
+			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package path has no trailing forward slash.', 1166633720);
+		}
+		if (substr($classesPath, 1, 1) === '/') {
+			throw new \TYPO3\FLOW3\Package\Exception\InvalidPackagePathException('Package classes path has a leading forward slash.', 1334841320);
+		}
 
+		$this->manifestPath = $manifestPath;
 		$this->packageKey = $packageKey;
-		$this->packagePath = $packagePath;
-		$this->classesPath = $classesPath;
+		$this->packagePath = $this->resolvePackagePathFromManifest();
+		if (isset($this->getComposerManifest()->autoload->{'psr-0'})) {
+			$this->classesPath = $this->packagePath . $this->getComposerManifest()->autoload->{'psr-0'}->{$this->getPackageNamespace()};
+		} else {
+			$this->classesPath = $this->packagePath . $classesPath;
+		}
 	}
 
 	/**
@@ -96,12 +109,17 @@ class Package implements PackageInterface {
 
 	/**
 	 * Returns the package meta data object of this package.
+	 * @todo temporary solution, info should be read enitrely from Composer manifest
 	 *
 	 * @return \TYPO3\FLOW3\Package\MetaData
 	 */
 	public function getPackageMetaData() {
 		if ($this->packageMetaData === NULL) {
-			$this->packageMetaData = PackageMetaDataReader::readPackageMetaData($this);
+			if (is_file($this->getMetaPath() . 'Package.xml')) {
+				$this->packageMetaData = PackageMetaDataReader::readPackageMetaData($this);
+			} else {
+				$this->packageMetaData = new MetaData($this->getPackageKey());
+			}
 		}
 		return $this->packageMetaData;
 	}
@@ -113,7 +131,7 @@ class Package implements PackageInterface {
 	 */
 	public function getClassFiles() {
 		if (!is_array($this->classFiles)) {
-			$this->classFiles = $this->buildArrayOfClassFiles($this->packagePath . $this->classesPath);
+			$this->classFiles = $this->buildArrayOfClassFiles($this->classesPath . '/');
 		}
 		return $this->classFiles;
 	}
@@ -138,14 +156,27 @@ class Package implements PackageInterface {
 	}
 
 	/**
-	/**
 	 * Returns the PHP namespace of classes in this package.
 	 *
 	 * @return string
 	 * @api
 	 */
 	public function getPackageNamespace() {
-		return str_replace('.', '\\', $this->packageKey);
+		$manifest = $this->getComposerManifest();
+		if (isset($manifest->autoload->{"psr-0"})) {
+			$namespaces = $manifest->autoload->{"psr-0"};
+			if (count($namespaces) === 1) {
+				$namespace = key($namespaces);
+			} else {
+				/**
+				 * @todo throw meaningful exception with proper description
+				 */
+				throw new \TYPO3\FLOW3\Package\Exception\InvalidPackageStateException('Multiple PHP namespaces in one package are not supported.', 1348053245);
+			}
+		} else {
+			$namespace = str_replace('.', '\\', $this->getPackageKey());
+		}
+		return $namespace;
 	}
 
 	/**
@@ -189,13 +220,39 @@ class Package implements PackageInterface {
 	}
 
 	/**
+	 * Returns the full path to the packages Composer manifest
+	 *
+	 * @return string
+	 */
+	public function getManifestPath() {
+		return $this->manifestPath;
+	}
+
+	/**
+	 * Resolves the path to the package by the position and content of the Composer manifest
+	 * These will most likely, but not always, be identical.
+	 *
+	 * @return string full package path
+	 */
+	protected function resolvePackagePathFromManifest() {
+		$targetDir = $this->getComposerManifest('target-dir');
+		if ($targetDir !== NULL) {
+			$packagePath = str_replace($targetDir . '/', '', $this->manifestPath);
+		} else {
+			$packagePath = $this->manifestPath;
+		}
+
+		return $packagePath;
+	}
+
+	/**
 	 * Returns the full path to this package's Classes directory
 	 *
 	 * @return string Path to this package's Classes directory
 	 * @api
 	 */
 	public function getClassesPath() {
-		return $this->packagePath . $this->classesPath;
+		return $this->classesPath;
 	}
 
 	/**
@@ -274,7 +331,34 @@ class Package implements PackageInterface {
 	}
 
 	/**
-	 * Builds and returns an array of class names => filenames of all
+	 * Returns contents of Composer manifest - or part there of.
+	 * @see json_decode for return values
+	 *
+	 * @param string $key Optional. Only return the part of the manifest indexed by 'key'
+	 * @return mixed|null
+	 */
+	protected function getComposerManifest($key = NULL) {
+		if (!isset($this->composerManifest)) {
+			if (!file_exists($this->getManifestPath() . 'composer.json')) {
+				return NULL;
+			}
+			$json = file_get_contents($this->getManifestPath() . 'composer.json');
+			$this->composerManifest = json_decode($json);
+		}
+		if ($key !== NULL) {
+			if (isset($this->composerManifest->{$key})) {
+				$value = $this->composerManifest->{$key};
+			} else {
+				$value = NULL;
+			}
+		} else {
+			$value = $this->composerManifest;
+		}
+		return $value;
+	}
+
+	/**
+	 * Builds and returns an array of class names => file names of all
 	 * *.php files in the package's Classes directory and its sub-
 	 * directories.
 	 *
@@ -286,7 +370,6 @@ class Package implements PackageInterface {
 	 * @throws \TYPO3\FLOW3\Package\Exception if recursion into directories was too deep or another error occurred
 	 */
 	protected function buildArrayOfClassFiles($classesPath, $extraNamespaceSegment = '', $subDirectory = '', $recursionLevel = 0) {
-		$packageNamespace = $this->getPackageNamespace();
 		$classFiles = array();
 		$currentPath = $classesPath . $subDirectory;
 		$currentRelativePath = substr($currentPath, strlen($this->packagePath));
@@ -303,7 +386,7 @@ class Package implements PackageInterface {
 						$classFiles = array_merge($classFiles, $this->buildArrayOfClassFiles($classesPath, $extraNamespaceSegment, $subDirectory . $filename . '/', ($recursionLevel+1)));
 					} else {
 						if (substr($filename, -4, 4) === '.php') {
-							$className = (str_replace('/', '\\', ($packageNamespace . '/' . $extraNamespaceSegment . substr($currentPath, strlen($classesPath)) . substr($filename, 0, -4))));
+							$className = (str_replace('/', '\\', ($extraNamespaceSegment . substr($currentPath, strlen($classesPath)) . substr($filename, 0, -4))));
 							$classFiles[$className] = $currentRelativePath . $filename;
 						}
 					}

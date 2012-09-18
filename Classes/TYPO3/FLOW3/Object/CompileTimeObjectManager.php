@@ -191,6 +191,9 @@ class CompileTimeObjectManager extends ObjectManager {
 		foreach ($packages as $packageKey => $package) {
 			if ($package->isObjectManagementEnabled()) {
 				$classFiles = $package->getClassFiles();
+				if (count($classFiles) === 0) {
+					throw new \TYPO3\FLOW3\Package\Exception\CorruptPackageException('Package "' . $packageKey . '" did not contain any files', 1338987564);
+				}
 				if ($this->allSettings['TYPO3']['FLOW3']['object']['registerFunctionalTestClasses'] === TRUE) {
 					$classFiles = array_merge($classFiles, $package->getFunctionalTestsClassFiles());
 				}
@@ -218,14 +221,14 @@ class CompileTimeObjectManager extends ObjectManager {
 	protected function filterClassNamesFromConfiguration(array $classNames) {
 		if (isset($this->allSettings['TYPO3']['FLOW3']['object']) && isset($this->allSettings['TYPO3']['FLOW3']['object']['excludeClasses'])) {
 			if (!is_array($this->allSettings['TYPO3']['FLOW3']['object']['excludeClasses'])) {
-				throw new \TYPO3\FLOW3\Configuration\Exception\InvalidConfigurationTypeException('The setting "TYPO3.FLOW3.object.excludeClasses" is invalid (it must be an array).');
+				throw new \TYPO3\FLOW3\Configuration\Exception\InvalidConfigurationTypeException('The setting "TYPO3.FLOW3.object.excludeClasses" is invalid. Check the syntax in the YAML file.');
 			}
 			foreach ($this->allSettings['TYPO3']['FLOW3']['object']['excludeClasses'] as $packageKey => $filterExpressions) {
 				if (!array_key_exists($packageKey, $classNames)) {
 					throw new \TYPO3\FLOW3\Configuration\Exception\NoSuchOptionException('The package "' . $packageKey . '" specified in the setting "TYPO3.FLOW3.object.excludeClasses" does not exist or is not active.');
 				}
 				if (!is_array($filterExpressions)) {
-					throw new \TYPO3\FLOW3\Configuration\Exception\InvalidConfigurationTypeException('The value given for setting "TYPO3.FLOW3.object.excludeClasses.\'' . $packageKey . '\'" is  invalid (it must be an array).');
+					throw new \TYPO3\FLOW3\Configuration\Exception\InvalidConfigurationTypeException('The value given for setting "TYPO3.FLOW3.object.excludeClasses.\'' . $packageKey . '\'" is  invalid. Check the syntax in the YAML file.');
 				}
 				foreach ($filterExpressions as $filterExpression) {
 					$classNames[$packageKey] = array_filter(
