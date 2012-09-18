@@ -311,47 +311,6 @@ class PackageManager implements \TYPO3\FLOW3\Package\PackageManagerInterface {
 	}
 
 	/**
-	 * Import a package from a remote location
-	 *
-	 * Imports the specified package from a remote git repository. The imported package will not be activated automatically.
-	 * Currently only packages located at forge.typo3.org are supported. Note that the git binary must be available.
-	 *
-	 * @param string $packageKey The package key of the package to import.
-	 * @return \TYPO3\FLOW3\Package\PackageInterface The imported package
-	 * @throws \TYPO3\FLOW3\Package\Exception\PackageKeyAlreadyExistsException
-	 * @throws \TYPO3\FLOW3\Package\Exception\PackageRepositoryException
-	 */
-	public function importPackage($packageKey) {
-		if ($this->isPackageAvailable($packageKey)) {
-			throw new \TYPO3\FLOW3\Package\Exception\PackageKeyAlreadyExistsException('The package already exists.', 1315223754);
-		}
-
-		exec($this->settings['package']['git']['gitBinary'] . ' --version', $output, $result);
-		if ($result !== 0) {
-			throw new \TYPO3\FLOW3\Package\Exception\PackageRepositoryException('Could not execute the git command line tool. Make sure to configure the right path in TYPO3:FLOW3:package:git:gitBinary.', 1315223755);
-		}
-		unset($output);
-
-		$packagesPath = Files::getUnixStylePath(Files::concatenatePaths(array($this->packagesBasePath, 'Application')));
-		$packagePath = Files::concatenatePaths(array($packagesPath, $packageKey)) . '/';
-		Files::createDirectoryRecursively($packagePath);
-
-		$gitCommand = ' clone --recursive git://git.typo3.org/FLOW3/Packages/' . $packageKey . '.git ' . $packagePath;
-		exec($this->settings['package']['git']['gitBinary'] . $gitCommand, $output, $result);
-		if ($result !== 0) {
-			throw new \TYPO3\FLOW3\Package\Exception\PackageRepositoryException('Could not clone the remote package.' . PHP_EOL . 'git ' . $gitCommand, 1315223852);
-		}
-
-		$package = new Package($packageKey, $packagePath);
-
-		$this->packageStatesConfiguration['packages'][$packageKey]['state'] = 'inactive';
-		$this->packageStatesConfiguration['packages'][$packageKey]['packagePath'] = substr($package->getPackagePath(), strlen($this->packagesBasePath));
-		$this->sortAndSavePackageStates();
-
-		return $package;
-	}
-
-	/**
 	 * Deactivates a package
 	 *
 	 * @param string $packageKey The package to deactivate
