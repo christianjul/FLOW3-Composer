@@ -167,28 +167,6 @@ class PackageManagerTest extends \TYPO3\FLOW3\Tests\UnitTestCase {
 		$this->assertEquals('inactive', $packageStates['packages'][$packageKey]['state']);
 	}
 
-	/**
-	 * @test
-	 * @expectedException TYPO3\FLOW3\Package\Exception\CorruptPackageException
-	 */
-	public function registerPackagesThrowsAnExceptionWhenItFindsACorruptPackage() {
-		mkdir('vfs://Test/Packages/Application/TYPO3.YetAnotherTestPackage/Meta', 0770, TRUE);
-		file_put_contents('vfs://Test/Packages/Application/TYPO3.YetAnotherTestPackage/Meta/Package.xml', '<xml>...</xml>');
-
-		$packageStatesConfiguration['packages'] = array(
-			'TYPO3.YetAnotherTestPackage' => array(
-				'packagePath' => 'vfs://Test/Packages/Application/TYPO3.YetAnotherTestPackage/',
-				'state' => 'active'
-			)
-		);
-
-		$packageManager = $this->getAccessibleMock('TYPO3\FLOW3\Package\PackageManager', array('dummy'));
-		$packageManager->_set('packagesBasePath', 'vfs://Test/Packages/');
-		$packageManager->_set('packageStatesPathAndFilename', 'vfs://Test/Configuration/PackageStates.php');
-		$packageManager->_set('packageStatesConfiguration', $packageStatesConfiguration);
-
-		$packageManager->_call('registerPackages');
-	}
 
 	/**
 	 * @test

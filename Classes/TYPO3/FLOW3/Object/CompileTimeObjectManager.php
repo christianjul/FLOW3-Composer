@@ -191,6 +191,9 @@ class CompileTimeObjectManager extends ObjectManager {
 		foreach ($packages as $packageKey => $package) {
 			if ($package->isObjectManagementEnabled()) {
 				$classFiles = $package->getClassFiles();
+				if (count($classFiles) === 0) {
+					throw new \TYPO3\FLOW3\Package\Exception\CorruptPackageException('Package "' . $packageKey . '" did not contain any files', 1338987564);
+				}
 				if ($this->allSettings['TYPO3']['FLOW3']['object']['registerFunctionalTestClasses'] === TRUE) {
 					$classFiles = array_merge($classFiles, $package->getFunctionalTestsClassFiles());
 				}
